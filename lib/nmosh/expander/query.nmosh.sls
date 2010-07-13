@@ -1,0 +1,6 @@
+(library (nmosh expander query)
+        (export current-program)
+        (import (primitives ex:current-program)
+                (rnrs))
+(define current-program ex:current-program)
+)

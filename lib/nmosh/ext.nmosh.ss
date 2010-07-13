@@ -1,15 +1,21 @@
 ; (nmosh ext) language
+; it is not so hygienic.. this library will be integrated with expander and
+; nmosh language.
 (library (nmosh ext)
-         (export import-dispatch import-ext begin define define-syntax syntax-rules quote car cdr)
+         (export import-dispatch-ext import-dispatch-c
+                 import-ext import-c
+                 begin define define-syntax syntax-rules quote car cdr)
          (import (nmosh)
                  (only (mosh) host-os)
                  (for (nmosh rnrs lisp-transformer) expand)
+                 (for (nmosh expander query) expand)
+                 (nmosh ext dispatch-c)
                  (srfi :48)
                  (nmosh ffi providers darwin-dyld)
                  (nmosh ffi providers darwin-framework)
                  (nmosh ffi providers darwin))
 
-(define (import-dispatch l)
+(define (import-dispatch-ext l)
   (define (complain)
     (assertion-violation "nmosh ext"
                          (format "architecture [~a] is not supported" (host-os))))
@@ -31,12 +37,29 @@
     (else
       (complain))))
 
+(define-syntax import-c
+  (lisp-transformer
+    (^l
+      (let ((clause (cdr l)))
+        `(begin
+           (define %mylib (import-dispatch-c ,(current-program) (quote ,clause)))
+           (define %lib (car %mylib))
+           (define %lookup (cdr %mylib))
+           (define-syntax c-function
+             (syntax-rules ()
+               ((_ rettype func)
+                (define func (%lookup %lib 'func '() 'rettype)))
+               ((_ rettype func argtype)
+                (define func (%lookup %lib 'func '(argtype) 'rettype)))
+               ((_ rettype func argtypes ...)
+                (define func (%lookup %lib 'func '(argtypes ...) 'rettype))))))))))
+
 (define-syntax import-ext
   (lisp-transformer
     (^l
       (let ((clause (cdr l)))
         `(begin
-           (define %mylib (import-dispatch (quote ,clause)))
+           (define %mylib (import-dispatch-ext (quote ,clause)))
            (define %lib (car %mylib))
            (define %lookup (cdr %mylib))
            (define-syntax c-function

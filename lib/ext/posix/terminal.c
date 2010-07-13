@@ -53,7 +53,7 @@ can_off(void){
 int
 checkterminal(void){
 	/* FIXME: check ANSI cap. */
-	return isatty(0);
+	return isatty(1);
 }
 
 int
