@@ -4,9 +4,22 @@
                 (srfi :8)
                 (srfi :48)
                 (mosh process)
+                (only (mosh) host-os)
                 (nmosh pathutils)
                 (nmosh cacheutils)
                 (nmosh ffi providers simple))
+
+
+(define (ext-name)
+  (case (string->symbol (host-os))
+    ((darwin) "dyld")
+    ((linux bsd) "so")
+    ((cygwin) "dll")
+    ;((win32) "nplg") ;  do not use DLL (hidden from user)
+    (else
+      (assertion-violation "nmosh PFFI dispatch-c"
+                           "your platform doesn't support PFFI yet.."
+                           (host-os)))))
 
 ; compiler call
 
@@ -58,7 +71,7 @@
 
 (define (import-dispatch-c path clauses)
   (let* ((sourcename (string-append (path-dirname path) (clause-source clauses)))
-         (destname (entity-path->cache-path sourcename "nmosh-pffi" "dyld")))
+         (destname (entity-path->cache-path sourcename "nmosh-pffi" (ext-name))))
     (compile sourcename destname)
     (cons (simple-loader (list destname)) make-simple-caller)))
 
