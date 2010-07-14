@@ -48,7 +48,7 @@
 
 (define (compile fn to)
   (define (cmdline)
-    (list "gcc" "-shared" "-g" "-O0"
+    (list "gcc" "-shared" "-g" "-O0" "-fPIC"
           "-o" to
           fn))
   (receive (ret stdout stderr) (launch (cmdline))
