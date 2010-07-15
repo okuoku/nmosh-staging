@@ -285,13 +285,13 @@
             CL_PROFILING_COMMAND_END
 
            )
-         (import (nmosh ext))
+         (import (rnrs)(nmosh ext))
 
-(import-ext ((darwin-framework "OpenCL"))
+(import-ext ((darwin-framework "OpenCL")
+             (win32-dll "OpenCL.dll"))
 
             ;; Platform API
-            (c-function int clGetPlatformIDs unsigned-int void*)
-            ;(c-function int clGetPlatformIDs unsigned-int void* void*)
+            (c-function int clGetPlatformIDs unsigned-int void* void*)
             (c-function int clGetPlatformInfo void* unsigned-int unsigned-int void* unsigned-int)
 
             ;; Device API
