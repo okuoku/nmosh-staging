@@ -1,13 +1,8 @@
 ; (nmosh ext) language
-; it is not so hygienic.. this library will be integrated with expander and
-; nmosh language.
 (library (nmosh ext)
-         (export import-dispatch-ext import-dispatch-c
-                 import-ext import-c
-                 begin define define-syntax syntax-rules quote car cdr)
+         (export import-ext import-c c-function)
          (import (nmosh)
                  (only (mosh) host-os)
-                 (for (nmosh rnrs lisp-transformer) expand)
                  (for (nmosh expander query) expand)
                  (nmosh ext dispatch-c)
                  (srfi :48)
@@ -38,38 +33,36 @@
       (complain))))
 
 (define-syntax import-c
-  (lisp-transformer
-    (^l
-      (let ((clause (cdr l)))
-        `(begin
-           (define %mylib (import-dispatch-c ,(current-program) (quote ,clause)))
-           (define %lib (car %mylib))
-           (define %lookup (cdr %mylib))
-           (define-syntax c-function
-             (syntax-rules ()
-               ((_ rettype func)
-                (define func (%lookup %lib 'func '() 'rettype)))
-               ((_ rettype func argtype)
-                (define func (%lookup %lib 'func '(argtype) 'rettype)))
-               ((_ rettype func argtypes ...)
-                (define func (%lookup %lib 'func '(argtypes ...) 'rettype))))))))))
+  (^[exp]
+    (syntax-case exp (c-function)
+      ((_  import-from import-set ...)
+       (with-syntax (((imported) (generate-temporaries #'(tmp))))
+         #`(begin
+             (define imported (import-dispatch-c #,(current-program) 'import-from))
+             (define-for-imported imported import-set)
+             ...
+             ))))))
+
+(define-syntax define-for-imported
+  (syntax-rules (c-function)
+    ((_ imported (c-function rettype func))
+     (define func ((cdr imported) (car imported) 'func '() 'rettype)))
+    ((_ imported (c-function rettype func argtypes ...))
+     (define func ((cdr imported) (car imported) 'func '(argtypes ...) 'rettype)))))
 
 (define-syntax import-ext
-  (lisp-transformer
-    (^l
-      (let ((clause (cdr l)))
-        `(begin
-           (define %mylib (import-dispatch-ext (quote ,clause)))
-           (define %lib (car %mylib))
-           (define %lookup (cdr %mylib))
-           (define-syntax c-function
-             (syntax-rules ()
-               ((_ rettype func)
-                (define func (%lookup %lib 'func '() 'rettype)))
-               ((_ rettype func argtype)
-                (define func (%lookup %lib 'func '(argtype) 'rettype)))
-               ((_ rettype func argtypes ...)
-                (define func (%lookup %lib 'func '(argtypes ...) 'rettype))))))))))
+  (^[exp]
+    (syntax-case exp (c-function)
+      ((_  import-from import-set ...)
+       (with-syntax (((imported) (generate-temporaries #'(tmp))))
+         #`(begin
+             (define imported (import-dispatch-ext 'import-from))
+             (define-for-imported imported import-set)
+             ...
+             ))))))
 
+(define-syntax c-function
+  (^[exp]
+    (syntax-violation 'c-function "invalid form" exp)))
 
 )
