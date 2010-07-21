@@ -1,5 +1,5 @@
 (library (nmosh ffi providers simple)
-         (export simple-loader simple-expand-loadpath make-simple-caller simple-env)
+         (export simple-loader simple-load1 simple-expand-loadpath make-simple-caller simple-env)
          (import (nmosh)
                  (srfi :48)
                  (srfi :98)
