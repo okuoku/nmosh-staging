@@ -1,14 +1,14 @@
 (library (nmosh ext dispatch-c)
-        (export import-dispatch-c)
-        (import (nmosh)
-                (srfi :8)
-                (srfi :48)
-                (mosh process)
-                (only (mosh) host-os)
-                (nmosh pathutils)
-                (nmosh cacheutils)
-                (nmosh ffi providers simple))
-
+         (export import-dispatch-c)
+         (import (nmosh)
+                 (srfi :8)
+                 (srfi :48)
+                 (mosh config)
+                 (mosh process)
+                 (only (mosh) host-os)
+                 (nmosh pathutils)
+                 (nmosh cacheutils)
+                 (nmosh ffi providers simple))
 
 (define (ext-name)
   (case (string->symbol (host-os))
@@ -46,9 +46,13 @@
             (close-port stderr-in)
             (values ret ro re)))))))
 
+(define myprefix (get-config "prefix"))
+
 (define (compile fn to)
   (define (cmdline)
     (list "gcc" "-shared" "-g" "-O0" "-fPIC"
+          (string-append "-I" myprefix "/include")
+          (string-append "-L" myprefix "/lib")
           "-o" to
           fn))
   (receive (ret stdout stderr) (launch (cmdline))
