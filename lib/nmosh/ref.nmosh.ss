@@ -1,6 +1,6 @@
 (library (nmosh ref)
-         (export ~ ~!)
-         (import (rnrs) (nmosh miniobj))
+         (export ~ :=)
+         (import (rnrs) (nmosh miniobj) (nmosh invalid-form))
 
 (define-syntax ref
   (syntax-rules ()
@@ -13,16 +13,14 @@
      (miniobj-set! target slot value))))
 
 (define-syntax ~
-  (syntax-rules ()
+  (syntax-rules (:=)
+    ((_ target slot := obj)
+     (refset! target slot obj))
     ((_ target slot)
      (ref target slot))
     ((_ target slot next-slot ...)
      (~ (ref target slot) next-slot ...))))
 
-(define-syntax ~!
-  (syntax-rules ()
-    ((_ target slot value)
-     (refset! target slot value))
-    ((_ target slot next-slot ... value)
-     (~! (ref target slot) next-slot ... value))))
+(define-invalid-form :=)
+
 )
